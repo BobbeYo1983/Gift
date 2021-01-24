@@ -40,8 +40,10 @@ public class MainActivity extends AppCompatActivity {
         //ищем вьюхи
         Button buttonBuy = findViewById(R.id.buttonBuy); //кнопка покупки товара
 
+
+
         /**
-         * Инициализация объекта класса для работы с покупками, делал по https://habr.com/ru/post/444072/.
+         * Инициализация объекта класса для работы с покупками
          * Слушатель, когда покупка будет выполнена
          */
         billingClient = BillingClient
@@ -55,12 +57,7 @@ public class MainActivity extends AppCompatActivity {
 
                             Log.v(TAG_LOG, "Выполнена покупка");
 
-                            //TODO A successful purchase also generates a purchase token, which is a unique identifier that represents
-                            // the user and the product ID for the in-app product they purchased. Your apps can store the purchase
-                            // token locally, though we recommend passing the token to your secure backend server where you can then
-                            // verify the purchase and protect against fraud.
-
-                            ReturnTheGoods(); //покупка выполнена, отдаем пользователю товар
+                            ReturnTheGoods(list); //покупка выполнена, отдаем пользователю товары
 
                         } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
 
@@ -73,12 +70,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 })
-                .enablePendingPurchases()
+                .enablePendingPurchases() // включить отложенные покупки
                 .build();
 
 
 
-        ConnectionToService(); //подключение к сервису покупок
+        //ConnectionToService(); //подключение к сервису покупок
 
 
 
@@ -93,10 +90,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
     /**
      * Подключение к сервису покупок
      */
     private void ConnectionToService () {
+
+        Log.v(TAG_LOG, "Подключение к сервису покупок");
 
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
@@ -109,19 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
                     QuerySkuDetails(); //запрос информации о товарах
 
-                    // TODO показать товар пользователю
-
-                    // TODO если список с покупками не пустой, то последовательно запускать покупку каждого товара
-                    // перенести этот код в проверку покупок
-                    List<Purchase> purchasesList = QueryPurchases(); //запрос о покупках когда подключились
-                    //если товар уже куплен, предоставить его пользователю
-                    for (int i = 0; i < purchasesList.size(); i++) {
-                        String purchaseId = purchasesList.get(i).getSku();
-                        //Если в списке покупок есть товар, то вернуть его пользователю
-                        if(TextUtils.equals(skuId, purchaseId)) {
-                            ReturnTheGoods();
-                        }
-                    }
+                    QueryPurchases(); //запрос о покупках когда подключились
 
                 }
             }
@@ -131,15 +119,13 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.v(TAG_LOG, "Ошибка подключения к сервису покупок, нужно реализовать повтор");
 
-
-                // TODO You must also implement retry logic to handle lost connections to Google Play.
-                // To implement retry logic, override the onBillingServiceDisconnected() callback method,
-                // and make sure that the BillingClient calls the startConnection() method to reconnect to
-                // Google Play before making further requests.
+                // TODO наверное нужно сделать несколько попыток и потом сказать попробуйте позже
+                ConnectionToService();
 
             }
         });
     }
+
 
 
     /**
@@ -157,65 +143,124 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSkuDetailsResponse(@NonNull BillingResult billingResult, @Nullable List<SkuDetails> list) {
                 if (billingResult.getResponseCode() == 0) {
-                    for (SkuDetails skuDetails : list) {
-                        mapSkuDetails.put(skuDetails.getSku(), skuDetails); // получаем карту с товарами
+                    if (list.size() > 0) {
+                        for (SkuDetails skuDetails : list) {
+
+                            mapSkuDetails.put(skuDetails.getSku(), skuDetails); // получаем карту с товарами
+                            Log.v(TAG_LOG, "С сервера получена информация о товаре = " + skuDetails.getSku());
+
+                        }
+
+                        // TODO показать товары
+
+                    } else {
+                        Log.v(TAG_LOG, "Список товаров полученный с сервера пуст");
                     }
                 }
             }
         });
     }
 
+
+
     /**
-     * Запуск процедуры покупки
+     * Запуск процедуры покупки одного товара
      * @param skuId идентификатор товара
      */
     public void LaunchBilling(String skuId) {
 
         Log.v(TAG_LOG, "Запуск процедуры покупки");
 
-        BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                .setSkuDetails(mapSkuDetails.get(skuId))
-                .build();
+        //проверяем есть ли такой товар на сервере
+        if (mapSkuDetails.get(skuId) != null) {
 
-        // TODO The launchBillingFlow() method returns one of several response codes listed in BillingClient.BillingResponseCode.
-        // Be sure to check this result to ensure there were no errors launching the purchase flow.
-        // A BillingResponseCode of OK indicates a successful launch.
-        // Обработать код ошибки
-        // если успешно должно появиться окошко на активити
-        // если пользователь купит, то дальше в onPurchasesUpdated
-        int responseCode = billingClient.launchBillingFlow(this, billingFlowParams).getResponseCode();
+            BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                    .setSkuDetails(mapSkuDetails.get(skuId))
+                    .build();
+
+            int responseCode = billingClient.launchBillingFlow(this, billingFlowParams).getResponseCode(); // получаем статус начала процедуры закупки
+
+            if (responseCode == BillingClient.BillingResponseCode.OK) {
+                Log.v(TAG_LOG, "Процедура закупки началась успешно");
+            } else {
+                Log.v(TAG_LOG, "Процедура закупки началась не успешно. Код ошибки = " + responseCode);
+            }
+
+        } else {
+
+            Log.v(TAG_LOG, "Закупаемого товара нет в списке с сервера. Либо список пуст и не запрашивался с сервера, либо нужно создать нужный товар на сервере");
+
+        }
+
     }
 
 
 
     /**
      * Выполняет процедуру отдачи товара пользователю после покупки.
+     * @param purchasesList список покупок
      */
-    private void ReturnTheGoods() {
+    private void ReturnTheGoods(List<Purchase> purchasesList) {
 
         Log.v(TAG_LOG, "Отдаем пользователю купленный товар");
+
+        for (Purchase purchase : purchasesList) {
+
+            //если статус покупки завершенный. Бывает еще статус отложенной покупки, когда пользователь начал покупать, но не завершил покупку
+            if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " завершенный");
+
+                Log.v(TAG_LOG, "token покупки = " + purchase.getPurchaseToken());
+
+                // TODO нужно проверять была ли раньше покупка с таким же токеном, а для этого хранить в бэкенде
+
+                //TODO отдать товар
+
+                //TODO При желании отметьте товар как использованный, чтобы пользователь мог купить его снова.
+
+            } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
+
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " отложенный");
+            }
+
+
+        }
 
     }
 
 
+
     /**
      * Запрос покупок, сделанных пользователем.
-     * @return список всех покупок
      */
-    private List<Purchase> QueryPurchases() {
+    private void QueryPurchases() {
 
         Log.v(TAG_LOG, "Запрос покупок, сделанных пользователем");
 
-        //TODO To handle these situations, be sure that your app calls BillingClient.queryPurchases()
-        // in your onResume() and onCreate() methods to ensure that all purchases are successfully
-        // processed as described in processing purchases.
-        // выполнить Handling purchases made outside your app
-        // выполнить Handling pending transactions
+        Purchase.PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP); // запрос одноразовых товаров
+        List<Purchase> purchasesList = purchasesResult.getPurchasesList();
 
-        //TODO Делаем проверку: если товар куплен — выполнить payComplete().
-        // Выполнить обработку ПОКУПОК https://developer.android.com/google/play/billing/integrate#java
+        if (purchasesList.size() > 0) {
+            Log.v(TAG_LOG, "У пользователя есть покупки");
 
-        Purchase.PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
-        return purchasesResult.getPurchasesList();
+            for (Purchase purchase : purchasesList) {
+
+                Log.v(TAG_LOG, "Нужно вернуть товар с Id = " + purchase.getSku());
+            }
+
+            ReturnTheGoods(purchasesList); //отдать товар пользователю по списку
+
+        }
+
+    }
+
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        ConnectionToService();
     }
 }
