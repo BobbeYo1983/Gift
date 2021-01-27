@@ -4,11 +4,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Point;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.GridView;
+import android.widget.TextView;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
@@ -32,15 +37,25 @@ public class MainActivity extends AppCompatActivity {
     private final Map<String, SkuDetails> mapSkuDetails = new HashMap<>(); //список всех товаров
     private final String TAG_LOG = "!@#";
 
+    private TextView mSelectText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // узнаем разрешение экрана
+        Display display = getWindowManager().getDefaultDisplay();
+        Point displaySize = new Point();
+        display.getSize(displaySize);
+        //width = size.x;
+        //height = size.y;
+
         //ищем вьюхи
         Button buttonBuy = findViewById(R.id.buttonBuy); //кнопка покупки товара
+        GridView gridview = (GridView) findViewById(R.id.gridView);
 
-
+        gridview.setAdapter(new ImageAdapter(this, displaySize));
 
         /**
          * Инициализация объекта класса для работы с покупками
