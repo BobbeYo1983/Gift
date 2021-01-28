@@ -14,74 +14,185 @@
         tools:layout_editor_absoluteY="-16dp">
 
 
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
 
+
             <TextView
                 android:id="@+id/textView1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
                 android:gravity="center_horizontal"
-                android:text="@string/textView1" />
+                android:text="@string/textView1"
+                />
 
-            <GridView
+
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+
+
+                <ImageView
+                    android:id="@+id/imageView1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="300dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/kat1" />
+
+
+
+                <ImageView
+                    android:id="@+id/imageView2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="300dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/kat2" />
+
+
+
+            </LinearLayout>
+
+
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+
+
+                <ImageView
+                    android:id="@+id/imageView3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="300dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/kat3" />
+
+
+
+                <ImageView
+                    android:id="@+id/imageView4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="300dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/kat4" />
+
+
+
+            </LinearLayout>
+
+
+
+            <!--<GridView
                 android:id="@+id/gridView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:numColumns="2"
                 android:gravity="center"
+                />-->
+
+
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:gravity="center_horizontal"
+                android:text="@string/textView2"
                 />
 
-            <!--<ImageView
-                android:id="@+id/imageView1"
+
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="Напиши о себе..."
+                app:counterEnabled="true"
+                app:counterMaxLength="3000"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                >
+
+
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxLength="3000"
+                    android:inputType="textMultiLine"
+                    />
+
+
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+
+            <TextView
+                android:id="@+id/textView3"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:srcCompat="@drawable/kat1" />
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:gravity="center_horizontal"
+                android:text="@string/textView3"
+                />
 
 
-
-            <ImageView
-                android:id="@+id/imageView2"
+            <RadioGroup
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/kat2" />
+                android:layout_height="match_parent" >
 
+                <RadioButton
+                    android:id="@+id/radioButton1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Шоколадка"
+                    android:checked="true"
+                    app:buttonTint="?attr/colorPrimary"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    />
 
+                <RadioButton
+                    android:id="@+id/radioButton2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Шампанское"
+                    app:buttonTint="?attr/colorPrimary"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    />
 
-            <ImageView
-                android:id="@+id/imageView3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/kat3" />
+                <RadioButton
+                    android:id="@+id/radioButton3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Шикарный букет цветов"
+                    app:buttonTint="?attr/colorPrimary"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    />
 
-
-            <ImageView
-                android:id="@+id/imageView4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/kat4" />
-
-
-
-            <ImageView
-                android:id="@+id/imageView5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/kat5" />-->
-
-
-
+            </RadioGroup>
 
             <Button
                 android:id="@+id/buttonBuy"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Купить" />
+                android:text="Отправить сообщение и подарить комплимент" />
 
 
         </LinearLayout>

@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.android.billingclient.api.BillingClient;
@@ -48,14 +50,27 @@ public class MainActivity extends AppCompatActivity {
         Display display = getWindowManager().getDefaultDisplay();
         Point displaySize = new Point();
         display.getSize(displaySize);
-        //width = size.x;
-        //height = size.y;
+        int x = Math.round(displaySize.x/2)-1;
+        int y = (int) (x * 1.777); // соотношение 16:9
+
 
         //ищем вьюхи
         Button buttonBuy = findViewById(R.id.buttonBuy); //кнопка покупки товара
-        GridView gridview = (GridView) findViewById(R.id.gridView);
+        ImageView imageView1 = findViewById(R.id.imageView1);
+        ImageView imageView2 = findViewById(R.id.imageView2);
+        ImageView imageView3 = findViewById(R.id.imageView3);
+        ImageView imageView4 = findViewById(R.id.imageView4);
 
-        gridview.setAdapter(new ImageAdapter(this, displaySize));
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(x,y);
+        imageView1.setLayoutParams(layoutParams);
+        imageView2.setLayoutParams(layoutParams);
+        imageView3.setLayoutParams(layoutParams);
+        imageView4.setLayoutParams(layoutParams);
+
+
+       // GridView gridview = (GridView) findViewById(R.id.gridView);
+
+        //gridview.setAdapter(new ImageAdapter(this, displaySize));
 
         /**
          * Инициализация объекта класса для работы с покупками
