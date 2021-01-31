@@ -3,6 +3,23 @@ plugins {
 }
 
 android {
+
+    signingConfigs {
+
+        debug {
+            storeFile file('KeyStoreZiziDebug.jks') // путь относительно настоящего файла
+            storePassword 'KeyStoreZiziDebug'
+            keyAlias 'KeyStoreZiziDebug'
+            keyPassword 'KeyStoreZiziDebug'
+        }
+        release {
+            storeFile file('..\\..\\KeyStoreZizi.jks') // путь относительно настоящего файла
+            keyAlias 'KeyStoreZizi'
+            storePassword 'Rend#1910'
+            keyPassword 'Rend#1910'
+        }
+    }
+
     compileSdkVersion 29
     buildToolsVersion '29.0.3'
 
@@ -14,14 +31,23 @@ android {
         versionName '1.0.0'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.release
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true // ProGuard выключен
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release // подписываем приложение выбранной подписью
+            shrinkResources true //удаляет ненужные ресурсы
+
+        }
+        debug {
+            signingConfig signingConfigs.debug
+            versionNameSuffix '.debug'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8

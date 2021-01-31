@@ -35,7 +35,11 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private BillingClient billingClient; // объект клиента для работы с оплатой
-    private final String skuId = "sku_id_1"; // id-товара
+    //private final String skuId = "sku_id_1"; // id-товара
+    private final String skuIdTest = "test"; // id-товара
+    private final String skuIdChocolate = "chocolate"; // id-товара
+    private final String skuIdChampagne = "champagne"; // id-товара
+    private final String skuIdBouquet = "bouquet"; // id-товара
     private final Map<String, SkuDetails> mapSkuDetails = new HashMap<>(); //список всех товаров
     private final String TAG_LOG = "!@#";
 
@@ -69,8 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
 
        // GridView gridview = (GridView) findViewById(R.id.gridView);
-
-        //gridview.setAdapter(new ImageAdapter(this, displaySize));
+       //gridview.setAdapter(new ImageAdapter(this, displaySize));
 
         /**
          * Инициализация объекта класса для работы с покупками
@@ -105,15 +108,11 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        //ConnectionToService(); //подключение к сервису покупок
-
-
-
         //привязываем выполнение покупки на кнопку
         buttonBuy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LaunchBilling(skuId); // запуск процедуры покупки
+                LaunchBilling(skuIdTest); // запуск процедуры покупки
             }
         });
 
@@ -167,11 +166,18 @@ public class MainActivity extends AppCompatActivity {
 
         SkuDetailsParams.Builder skuDetailsParamsBuilder = SkuDetailsParams.newBuilder();
         List<String> skuList = new ArrayList<>();
-        skuList.add(skuId); // запрашиваем об этом товаре
+        //skuList.add(skuId); // запрашиваем об этом товаре
+        skuList.add(skuIdTest); // запрашиваем об этом товаре
+        skuList.add(skuIdChocolate); // запрашиваем об этом товаре
+        skuList.add(skuIdChampagne); // запрашиваем об этом товаре
+        skuList.add(skuIdBouquet); // запрашиваем об этом товаре
         skuDetailsParamsBuilder.setSkusList(skuList).setType(BillingClient.SkuType.INAPP); // INAPP для одноразовых покупок
         billingClient.querySkuDetailsAsync(skuDetailsParamsBuilder.build(), new SkuDetailsResponseListener() {
             @Override
             public void onSkuDetailsResponse(@NonNull BillingResult billingResult, @Nullable List<SkuDetails> list) {
+
+                Log.v(TAG_LOG, "Статус результата запроса информации о товарах с сервера = " + billingResult.getResponseCode() + " Размер списка товаров = " + list.size());
+
                 if (billingResult.getResponseCode() == 0) {
                     if (list.size() > 0) {
                         for (SkuDetails skuDetails : list) {
@@ -186,7 +192,10 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         Log.v(TAG_LOG, "Список товаров полученный с сервера пуст");
                     }
+                } else {
+                    Log.v(TAG_LOG, "Ошибка при запросе информации о товарах с сервера. Код ошибки: " + billingResult.getResponseCode());
                 }
+
             }
         });
     }
