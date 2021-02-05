@@ -88,17 +88,21 @@ public class MainActivity extends AppCompatActivity {
                         //если результат покупки успешный и список с покупками не пустой
                         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && list != null) {
 
-                            Log.v(TAG_LOG, "Выполнена покупка");
+                            Log.v(TAG_LOG, "Выполнена покупка, нужно проверить статус покупок, завершенные или отложенные");
 
-                            ReturnTheGoods(list); //покупка выполнена, отдаем пользователю товары
+                            CheckStatusPurchases(list); //покупка выполнена, нужно проверить статус покупок, завершенные или отложенные
 
                         } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
 
                             Log.v(TAG_LOG, "Пользователь отменил покупку, нужно проверить, что товар не дотупен для пользователя");
 
+                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
+
+                            Log.v(TAG_LOG, "Товар уже куплен, нужно показать это пользователю, если он хочет его купить еще раз.ю то попытаться это сделать через 5 минут");
+
                         } else {
 
-                            Log.v(TAG_LOG, "Неизвестная ошибка покупки товара. Нужно сохранить информацию на сервер");
+                            Log.v(TAG_LOG, "Неизвестная ошибка покупки товара. Код ошибки: " + billingResult.getResponseCode());
 
                         }
                     }
@@ -220,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
             int responseCode = billingClient.launchBillingFlow(this, billingFlowParams).getResponseCode(); // получаем статус начала процедуры закупки
 
             if (responseCode == BillingClient.BillingResponseCode.OK) {
-                Log.v(TAG_LOG, "Процедура закупки началась успешно");
+                Log.v(TAG_LOG, "Процедура закупки началась успешно. Пользователь открыл окошко с кнопкой КУПИТЬ.");
             } else {
                 Log.v(TAG_LOG, "Процедура закупки началась не успешно. Код ошибки = " + responseCode);
             }
@@ -241,29 +245,15 @@ public class MainActivity extends AppCompatActivity {
      */
     private void ReturnTheGoods(List<Purchase> purchasesList) {
 
-        Log.v(TAG_LOG, "Отдаем пользователю купленный товар");
-
         for (Purchase purchase : purchasesList) {
 
-            //если статус покупки завершенный. Бывает еще статус отложенной покупки, когда пользователь начал покупать, но не завершил покупку
-            if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+            Log.v(TAG_LOG, "Проверим ранее покупался ли товар с Id = " + purchase.getSku() + " c токеном покупки = " + purchase.getPurchaseToken());
+            // TODO нужно проверять была ли раньше покупка с таким же токеном, а для этого хранить в бэкенде
 
-                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " завершенный");
+            //TODO отдать товар
+            Log.v(TAG_LOG, "Отдаем купленный товар с Id = " + purchase.getSku());
 
-                Log.v(TAG_LOG, "token покупки = " + purchase.getPurchaseToken());
-
-                // TODO нужно проверять была ли раньше покупка с таким же токеном, а для этого хранить в бэкенде
-
-                //TODO отдать товар
-
-                //TODO При желании отметьте товар как использованный, чтобы пользователь мог купить его снова.
-
-            } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
-
-                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " отложенный");
-            }
-
-
+            //TODO При желании отметьте товар как использованный, чтобы пользователь мог купить его снова.
         }
 
     }
@@ -275,23 +265,55 @@ public class MainActivity extends AppCompatActivity {
      */
     private void QueryPurchases() {
 
-        Log.v(TAG_LOG, "Запрос покупок, сделанных пользователем");
+        Log.v(TAG_LOG, "Проверка, есть ли у пользователя покупки");
 
         Purchase.PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP); // запрос одноразовых товаров
         List<Purchase> purchasesList = purchasesResult.getPurchasesList();
 
         if (purchasesList.size() > 0) {
-            Log.v(TAG_LOG, "У пользователя есть покупки");
+            Log.v(TAG_LOG, "У пользователя ЕСТЬ какие-то покупки. Нужно проверить завершенные или отложенные.");
+            CheckStatusPurchases(purchasesList);
+        } else {
+            Log.v(TAG_LOG, "У пользователя НЕТ покупок");
+        }
 
-            for (Purchase purchase : purchasesList) {
 
-                Log.v(TAG_LOG, "Нужно вернуть товар с Id = " + purchase.getSku());
+    }
+
+
+    /**
+     * Проверка статуса покупок из списка. Статус покупки может быть завершенной или отложенной.
+     * Если покупка отложенная, вычеркиваем ее из списка на выдачу товара пользователю.
+     * @param purchasesList список покупок
+     */
+    private void CheckStatusPurchases (List<Purchase> purchasesList){
+
+        Log.v(TAG_LOG, "Проверка статуса покупок по списку. Отложенные или завершенные. ");
+
+        for (Purchase purchase : purchasesList) {
+
+            //если статус покупки завершенный. Бывает еще статус отложенной покупки, когда пользователь начал покупать, но не завершил покупку
+            if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " завершенный, товар не удаляем из списка на выдачу пользователю");
+
+            } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
+
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " отложенный, товар удаляем из списка на выдачу пользователю");
+                purchasesList.remove(purchase);
+
+            } else {
+
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " неизвестный");
             }
-
-            ReturnTheGoods(purchasesList); //отдать товар пользователю по списку
 
         }
 
+        //Если список на выдачу товара не пустой, то отдадим товар
+        if (purchasesList.size() > 0) {
+            Log.v(TAG_LOG, "Есть завершенные покупки, можно выдать товар");
+            ReturnTheGoods(purchasesList); //отдать товар пользователю по списку
+        }
     }
 
 
