@@ -46,7 +46,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="300dp"
                     android:layout_weight="1"
-                    app:srcCompat="@drawable/kat1" />
+                    app:srcCompat="@drawable/" />
 
 
 
@@ -75,7 +75,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="300dp"
                     android:layout_weight="1"
-                    app:srcCompat="@drawable/kat3" />
+                    app:srcCompat="@drawable/Kat3" />
 
 
 
@@ -84,7 +84,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="300dp"
                     android:layout_weight="1"
-                    app:srcCompat="@drawable/kat4" />
+                    app:srcCompat="@drawable/Kat4" />
 
 
 
