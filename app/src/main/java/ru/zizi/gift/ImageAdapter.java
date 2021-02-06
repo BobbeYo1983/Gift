@@ -15,8 +15,8 @@ public class ImageAdapter extends BaseAdapter {
     private Point displaySize;
 
     // references to our images
-    private	Integer[] images = { R.drawable.kat1, R.drawable.kat2,
-            R.drawable.kat3, R.drawable.kat4};
+    private	Integer[] images = { R.drawable.kat_1, R.drawable.kat_2,
+            R.drawable.kat_3, R.drawable.kat_4};
 
     public ImageAdapter(Context context, Point displaySize) {
         this.context = context;
