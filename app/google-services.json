@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "540618673808",
+    "project_id": "ru-zizi-gift",
+    "storage_bucket": "ru-zizi-gift.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:540618673808:android:0f19ec7f87bf3f72019215",
+        "android_client_info": {
+          "package_name": "ru.zizi.gift"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "540618673808-kd4r2hh9tcbofau8aoq7voithfuri3p7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMwX8ewiAXAMvp8PQjkE5R0mBhqmWUziM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "540618673808-kd4r2hh9tcbofau8aoq7voithfuri3p7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

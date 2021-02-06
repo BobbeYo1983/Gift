@@ -6,16 +6,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Point;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
+import android.widget.RadioButton;
+import android.widget.Toast;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
@@ -26,6 +24,11 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.android.billingclient.api.SkuDetailsResponseListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,20 +38,30 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private BillingClient billingClient; // объект клиента для работы с оплатой
-    //private final String skuId = "sku_id_1"; // id-товара
     private final String skuIdTest = "test"; // id-товара
     private final String skuIdChocolate = "chocolate"; // id-товара
     private final String skuIdChampagne = "champagne"; // id-товара
     private final String skuIdBouquet = "bouquet"; // id-товара
     private final Map<String, SkuDetails> mapSkuDetails = new HashMap<>(); //список всех товаров
     private final String TAG_LOG = "!@#";
+    private String purchaseToken = "empty";
 
-    private TextView mSelectText;
+    private FirebaseFirestore firebaseFirestore;
+    //private FirebaseAuth firebaseAuth; // объект для работы с авторизацией в Firebase
+
+    private RadioButton radioButton1;
+    private RadioButton radioButton2;
+    private RadioButton radioButton3;
+    private TextInputEditText aboutYou;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //FirebaseAuth firebaseAuth = FirebaseAuth.getInstance(); // инициализация объект для работы с авторизацией в FireBase
+        //firebaseAuth.signInAnonymously();
+        firebaseFirestore = FirebaseFirestore.getInstance(); // инициализация объект для работы с базой
 
         // узнаем разрешение экрана
         Display display = getWindowManager().getDefaultDisplay();
@@ -60,6 +73,10 @@ public class MainActivity extends AppCompatActivity {
 
         //ищем вьюхи
         Button buttonBuy = findViewById(R.id.buttonBuy); //кнопка покупки товара
+        aboutYou = findViewById(R.id.aboutYou);
+        radioButton1 = findViewById(R.id.radioButton1);
+        radioButton2 = findViewById(R.id.radioButton2);
+        radioButton3 = findViewById(R.id.radioButton3);
         ImageView imageView1 = findViewById(R.id.imageView1);
         ImageView imageView2 = findViewById(R.id.imageView2);
         ImageView imageView3 = findViewById(R.id.imageView3);
@@ -116,9 +133,59 @@ public class MainActivity extends AppCompatActivity {
         buttonBuy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LaunchBilling(skuIdTest); // запуск процедуры покупки
+
+                Log.v(TAG_LOG, "Нажата кнопка КУПИТЬ И ОТПРАВИТЬ СООБЩЕНИЕ");
+
+                if (!aboutYou.getText().toString().isEmpty()) { // если поле о себе заполнено
+
+                    //LaunchBilling(skuIdTest); // запуск процедуры покупки
+
+                    if (radioButton1.isChecked()) {
+                        LaunchBilling(skuIdChocolate);
+                    }
+
+                    if (radioButton2.isChecked()) {
+                        LaunchBilling(skuIdChampagne);
+                    }
+
+                    if (radioButton3.isChecked()) {
+                        LaunchBilling(skuIdBouquet);
+                    }
+                } else {
+
+                    Toast.makeText(getApplicationContext(), "Напиши о себе", Toast.LENGTH_LONG).show();
+                }
+
             }
         });
+
+    }
+
+
+
+    /**
+     * Сохранение сообщения в БД
+     */
+    private void SaveMessage(){
+
+        Log.v(TAG_LOG, "Сохраняем сообщение в БД");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("message", aboutYou.getText().toString());
+
+        Task<DocumentReference> documentReference = firebaseFirestore.collection("messages")
+                .add(data).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentReference> task) {
+                        Log.v(TAG_LOG, "Задача по сохраненияю в БД выполнена");
+                        if (task.isSuccessful()) { //если сохранение успешно
+                            Log.v(TAG_LOG, "Сообщение сохранено в БД");
+                        }else {
+                            Log.v(TAG_LOG, "Ошибка сохранения в БД: " + task.getException().getMessage());
+                        }
+
+                    }
+                });
 
     }
 
@@ -178,20 +245,20 @@ public class MainActivity extends AppCompatActivity {
         skuDetailsParamsBuilder.setSkusList(skuList).setType(BillingClient.SkuType.INAPP); // INAPP для одноразовых покупок
         billingClient.querySkuDetailsAsync(skuDetailsParamsBuilder.build(), new SkuDetailsResponseListener() {
             @Override
-            public void onSkuDetailsResponse(@NonNull BillingResult billingResult, @Nullable List<SkuDetails> list) {
+            public void onSkuDetailsResponse(@NonNull BillingResult billingResult, @Nullable List<SkuDetails> listSkuDetails) {
 
-                Log.v(TAG_LOG, "Статус результата запроса информации о товарах с сервера = " + billingResult.getResponseCode() + " Размер списка товаров = " + list.size());
+                Log.v(TAG_LOG, "Статус результата запроса информации о товарах с сервера = " + billingResult.getResponseCode() + " Размер списка товаров = " + listSkuDetails.size());
 
                 if (billingResult.getResponseCode() == 0) {
-                    if (list.size() > 0) {
-                        for (SkuDetails skuDetails : list) {
+                    if (listSkuDetails.size() > 0) {
+                        for (SkuDetails skuDetails : listSkuDetails) {
 
                             mapSkuDetails.put(skuDetails.getSku(), skuDetails); // получаем карту с товарами
                             Log.v(TAG_LOG, "С сервера получена информация о товаре = " + skuDetails.getSku());
 
                         }
 
-                        // TODO показать товары
+                        // TODO Показываем информацию от товарах
 
                     } else {
                         Log.v(TAG_LOG, "Список товаров полученный с сервера пуст");
@@ -248,12 +315,20 @@ public class MainActivity extends AppCompatActivity {
         for (Purchase purchase : purchasesList) {
 
             Log.v(TAG_LOG, "Проверим ранее покупался ли товар с Id = " + purchase.getSku() + " c токеном покупки = " + purchase.getPurchaseToken());
-            // TODO нужно проверять была ли раньше покупка с таким же токеном, а для этого хранить в бэкенде
+            // нужно проверять была ли раньше покупка с таким же токеном, а для этого хранить в бэкенде
+            if (!purchaseToken.equals(purchase.getPurchaseToken())) { //если новый токен, то сохраняем в БД
 
-            //TODO отдать товар
-            Log.v(TAG_LOG, "Отдаем купленный товар с Id = " + purchase.getSku());
+                //TODO отдать товар
+                Log.v(TAG_LOG, "Отдаем купленный товар с Id = " + purchase.getSku());
+                SaveMessage();
 
-            //TODO При желании отметьте товар как использованный, чтобы пользователь мог купить его снова.
+                //TODO При желании отметьте товар как использованный, чтобы пользователь мог купить его снова.
+
+                purchaseToken = purchase.getPurchaseToken(); //запоминаем токен
+
+            }
+
+
         }
 
     }
@@ -290,17 +365,19 @@ public class MainActivity extends AppCompatActivity {
 
         Log.v(TAG_LOG, "Проверка статуса покупок по списку. Отложенные или завершенные. ");
 
+        List<Purchase> purchasesListDelivery = new ArrayList<Purchase>(); //Список товаров на выдачу пользователю
+
         for (Purchase purchase : purchasesList) {
 
             //если статус покупки завершенный. Бывает еще статус отложенной покупки, когда пользователь начал покупать, но не завершил покупку
             if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
 
-                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " завершенный, товар не удаляем из списка на выдачу пользователю");
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " завершенный, товар ДОБАВЛЯЕМ в список на выдачу");
+                purchasesListDelivery.add(purchase);
 
             } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
 
-                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " отложенный, товар удаляем из списка на выдачу пользователю");
-                purchasesList.remove(purchase);
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " отложенный, товар НЕ ДОБАВЛЯЕМ в список на выдачу");
 
             } else {
 
@@ -310,9 +387,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //Если список на выдачу товара не пустой, то отдадим товар
-        if (purchasesList.size() > 0) {
+        if (purchasesListDelivery.size() > 0) {
             Log.v(TAG_LOG, "Есть завершенные покупки, можно выдать товар");
-            ReturnTheGoods(purchasesList); //отдать товар пользователю по списку
+            ReturnTheGoods(purchasesListDelivery); //отдать товар пользователю по списку
         }
     }
 
@@ -324,4 +401,19 @@ public class MainActivity extends AppCompatActivity {
 
         ConnectionToService();
     }
+
+/*    private void UpdateUI(List<SkuDetails> listSkuDetails) {
+
+        RadioButton radioButton1 = findViewById(R.id.radioButton1);
+        RadioButton radioButton2 = findViewById(R.id.radioButton2);
+        RadioButton radioButton3 = findViewById(R.id.radioButton3);
+
+        for (SkuDetails skuDetails : listSkuDetails) {
+            if (skuDetails.getSku().equals("chocolate")) {
+                radioButton1.setText("Вкусная шоколадка,");
+            }
+        }
+
+
+    }*/
 }
