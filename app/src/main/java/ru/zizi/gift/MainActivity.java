@@ -19,6 +19,8 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.ConsumeParams;
+import com.android.billingclient.api.ConsumeResponseListener;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
@@ -44,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private final String skuIdBouquet = "bouquet"; // id-товара
     private final Map<String, SkuDetails> mapSkuDetails = new HashMap<>(); //список всех товаров
     private final String TAG_LOG = "!@#";
-    private String purchaseToken = "empty";
+    //private String purchaseToken = "empty";
 
     private FirebaseFirestore firebaseFirestore;
     //private FirebaseAuth firebaseAuth; // объект для работы с авторизацией в Firebase
@@ -308,29 +310,73 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Выполняет процедуру отдачи товара пользователю после покупки.
-     * @param purchasesList список покупок
+     * @param purchase покупка
      */
-    private void ReturnTheGoods(List<Purchase> purchasesList) {
+    private void ReturnTheGoods(Purchase purchase) {
+
+        Log.v(TAG_LOG, "Отдаем купленный товар с Id = " + purchase.getSku());
+        SaveMessage();
+
+    }
+
+
+
+    /**
+     * Подтверждение покупки товаров. Если не подтвердить, что через 3 дня будет возврат денег
+     * @param purchasesList список с завершенными покупками, проверять не надо
+     */
+    private void ConfirmationPurchase(List<Purchase> purchasesList) {
 
         for (Purchase purchase : purchasesList) {
 
             Log.v(TAG_LOG, "Проверим ранее покупался ли товар с Id = " + purchase.getSku() + " c токеном покупки = " + purchase.getPurchaseToken());
-            // нужно проверять была ли раньше покупка с таким же токеном, а для этого хранить в бэкенде
-            if (!purchaseToken.equals(purchase.getPurchaseToken())) { //если новый токен, то сохраняем в БД
 
-                //TODO отдать товар
-                Log.v(TAG_LOG, "Отдаем купленный товар с Id = " + purchase.getSku());
-                SaveMessage();
+            if (VerifyPurchase(purchase.getSku(), purchase.getPurchaseToken())) {
 
-                //TODO При желании отметьте товар как использованный, чтобы пользователь мог купить его снова.
+                Log.v(TAG_LOG, "Товар с Id = " + purchase.getSku() + " c токеном покупки = " + purchase.getPurchaseToken() + " ранее НЕ ПОКУПАЛСЯ.");
 
-                purchaseToken = purchase.getPurchaseToken(); //запоминаем токен
+                //TODO подтвердить покупку
 
+                //объект подтверждение покупки Гуглу
+                ConsumeParams consumeParams =
+                        ConsumeParams.newBuilder()
+                                .setPurchaseToken(purchase.getPurchaseToken())
+                                .build();
+
+                //асинхронный слушатель результата подтверждения покупки
+                ConsumeResponseListener listener = new ConsumeResponseListener() {
+                    @Override
+                    public void onConsumeResponse(BillingResult billingResult, String purchaseToken) {
+                        if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                            // Handle the success of the consume operation.
+                            //Вставить лог
+                            //TODO вернуть товар
+                        }
+                    }
+                };
+
+                billingClient.consumeAsync(consumeParams, listener);
+
+            } else {
+                Log.v(TAG_LOG, "Товар с Id = " + purchase.getSku() + " c токеном покупки = " + purchase.getPurchaseToken() + " ранее УЖЕ ПОКУПАЛСЯ.");
             }
-
 
         }
 
+    }
+
+
+    /**
+     * * Проверка была ли раньше такая покупка
+     * @param sku идентификатор товара
+     * @param purchaseToken уникальный ключ покупки
+     * @return true - проверка прошла успешно, покупки небыло, false - была
+     */
+    private boolean VerifyPurchase(String sku, String purchaseToken) {
+
+        // TODO нужно проверять была ли раньше покупка с таким же токеном, а для этого хранить в бэкенде
+
+        return true;
     }
 
 
@@ -372,12 +418,12 @@ public class MainActivity extends AppCompatActivity {
             //если статус покупки завершенный. Бывает еще статус отложенной покупки, когда пользователь начал покупать, но не завершил покупку
             if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
 
-                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " завершенный, товар ДОБАВЛЯЕМ в список на выдачу");
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " завершенный, покупку ДОБАВЛЯЕМ в список на выдачу");
                 purchasesListDelivery.add(purchase);
 
             } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
 
-                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " отложенный, товар НЕ ДОБАВЛЯЕМ в список на выдачу");
+                Log.v(TAG_LOG, "Статус покупки товара с Id = " + purchase.getSku() + " отложенный, покупку НЕ ДОБАВЛЯЕМ в список на выдачу");
 
             } else {
 
@@ -386,10 +432,10 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        //Если список на выдачу товара не пустой, то отдадим товар
+        //Если список на выдачу покупок не пустой, то отдадим товар
         if (purchasesListDelivery.size() > 0) {
-            Log.v(TAG_LOG, "Есть завершенные покупки, можно выдать товар");
-            ReturnTheGoods(purchasesListDelivery); //отдать товар пользователю по списку
+            Log.v(TAG_LOG, "Есть завершенные покупки, нужно подтвердить покупку");
+            ConfirmationPurchase(purchasesListDelivery); //отдать товар пользователю по списку
         }
     }
 
