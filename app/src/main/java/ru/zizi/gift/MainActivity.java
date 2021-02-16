@@ -335,8 +335,6 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.v(TAG_LOG, "Товар с Id = " + purchase.getSku() + " c токеном покупки = " + purchase.getPurchaseToken() + " ранее НЕ ПОКУПАЛСЯ.");
 
-                //TODO подтвердить покупку
-
                 //объект подтверждение покупки Гуглу
                 ConsumeParams consumeParams =
                         ConsumeParams.newBuilder()
@@ -349,13 +347,17 @@ public class MainActivity extends AppCompatActivity {
                     public void onConsumeResponse(BillingResult billingResult, String purchaseToken) {
                         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                             // Handle the success of the consume operation.
-                            //Вставить лог
-                            //TODO вернуть товар
+                            Log.v(TAG_LOG, "Покупка с токеном = " + purchaseToken + " подтверждена УСПЕШНО, нужно вернуть товар");
+
+                            ReturnTheGoods(purchase); // отдаем товар пользователю
+
+                        } else {
+                            Log.v(TAG_LOG, "Ошибка подтверждения покупки с токеном = " + purchaseToken + " Код ошибки: " + billingResult.getResponseCode());
                         }
                     }
                 };
 
-                billingClient.consumeAsync(consumeParams, listener);
+                billingClient.consumeAsync(consumeParams, listener); // запуск подтверждения покупки
 
             } else {
                 Log.v(TAG_LOG, "Товар с Id = " + purchase.getSku() + " c токеном покупки = " + purchase.getPurchaseToken() + " ранее УЖЕ ПОКУПАЛСЯ.");
